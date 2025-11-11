@@ -3,18 +3,39 @@
 import Header from "@/components/Header";
 import { useProjects } from "@/components/useProjects";
 import { useUser } from "@/components/useUser";
+import { json } from "stream/consumers";
 
 export default function ProfilePage() {
   const user = useUser((state: any) => state.user);
   const setUser = useUser((state: any) => state.setUser);
   const projects = useProjects((state: any) => state.projects);
+  const addProject = useProjects((state: any) => state.addProject);
   const removeProject = useProjects((state: any) => state.removeProject);
 
-  function handleSubmit(event: React.FormEvent) {
+  async function handleSubmit(event: React.FormEvent) {
     event.preventDefault();
     const form = event.target as HTMLFormElement;
-    const name = (form.elements.namedItem("name") as HTMLInputElement).value;
-    setUser({ name });
+    const formData = new FormData(form);
+    formData.append('type', "startup");
+
+    // console.log('Submitting form data:', Object.fromEntries(formData.entries()));
+    
+    const data = await fetch('/api/profiles', {
+      method: 'POST',
+      body: JSON.stringify(Object.fromEntries(formData.entries())),
+      headers: {
+        'Accept': 'application/json',
+      },
+    }).then(res => res.json());
+
+    console.log('Startup posted:', data);
+
+    if (data) {
+      form.reset();
+      addProject(data);
+    } else {
+      console.error('Failed to post startup');
+    }
   }
 
   if (!user) {
@@ -38,8 +59,18 @@ export default function ProfilePage() {
           <p>Welcome, {user.name}!</p>
         </div>
         <section>
-          <h2>My Projects</h2>
-          <p>You have no projects listed.</p>
+          <h2>New Startup</h2>
+          <form onSubmit={handleSubmit}>
+            <label>
+              Name:
+              <input type="text" name="name" placeholder="Enter startup name" required />
+            </label>
+            <label>
+              Description:
+              <textarea name="description" placeholder="Enter startup description" />
+            </label>
+            <button type="submit">Post Startup</button>
+          </form>
         </section>
         <section>
           <h2>Startups</h2>

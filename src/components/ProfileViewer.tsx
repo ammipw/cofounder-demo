@@ -3,7 +3,7 @@
 import { useEffect, useState } from "react";
 import { useUser } from "./useUser";
 import { useProjects } from "./useProjects";
-import { FaRegThumbsUp } from "react-icons/fa6";
+import { FaRegThumbsDown, FaRegThumbsUp } from "react-icons/fa6";
 
 function LoginModal({isLoggedIn, isOpen}: {isLoggedIn: boolean, isOpen: boolean}) {
   return (
@@ -19,7 +19,8 @@ type Profile = {
 
 export default function ProfileViewer() {
   const user = useUser((state: any) => state.user);
-  const [profile, setProfile] = useState<Profile | null>(null);
+  const [profiles, setProfiles] = useState<Profile[]>([]);
+  const [index, setIndex] = useState(0);
   const projects = useProjects((state: any) => state.projects);
   const addProject = useProjects((state: any) => state.addProject);
 
@@ -28,7 +29,7 @@ export default function ProfileViewer() {
       const profiles = await fetch("/api/profiles").then(res => res.json());
 
       if (profiles.length > 0) {
-        setProfile(profiles[0]);
+        setProfiles(profiles);
       }
 
       console.log("Fetched profiles:", profiles);
@@ -45,11 +46,18 @@ export default function ProfileViewer() {
     }
 
     const value = event.currentTarget.value;
-    console.log("User made a verdict on the profile:", value);
+    // console.log("User made a verdict on the profile:", value);
 
-    if (value === "true" && profile) {
-      addProject({ name: profile.name });
+    if (value === "true" && profiles[index]) {
+      addProject({ name: profiles[index].name });
     }
+
+    nextProfile();
+  }
+
+  function nextProfile() {
+    // Logic to fetch and display the next profile
+    setIndex((prevIndex) => prevIndex + 1);
   }
 
   return (
@@ -58,23 +66,23 @@ export default function ProfileViewer() {
         <div className="w-full h-full mb-4 mx-auto bg-neutral-600">
           <img src="https://placehold.co/150x100" alt="Profile Picture" className="w-full h-full object-cover max-w-sm mb-4 mx-auto" />
         </div>
-        <h3 className="text-xl font-semibold mb-2">{profile?.name ?? "Unknown User"}</h3>
-        <p className="mb-4">{profile?.description ?? "No description available."}</p>
+        <h3 className="text-xl font-semibold mb-2">{profiles[index]?.name ?? "Unknown User"}</h3>
+        <p className="mb-4">{profiles[index]?.description ?? "No description available."}</p>
         <div>
           <p>Looking for:</p>
           <ul>
-            {profile?.audience?.map((item, index) => (
+            {profiles[index]?.audience?.map((item, index) => (
               <li key={index}>{item}</li>
             )) ?? <li>No preferences specified.</li>}
           </ul>
         </div>
         <div className="">
+          <button className={"bg-red-900/40 rounded p-4 flex-1 hover:bg-red-900"} onClick={handleVerdict} value={"false"}>
+            <FaRegThumbsDown size={24} /> Skip this 
+          </button>
           <button className={"bg-green-900/40 rounded p-4 flex-1 hover:bg-green-900"} onClick={handleVerdict} value={"true"}>
             <FaRegThumbsUp size={24} /> I'm interested
           </button>
-        </div>
-        <div>
-
         </div>
       </div>
     </div>
